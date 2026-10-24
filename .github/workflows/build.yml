@@ -1,43 +1,38 @@
-name: Extract Random Reward ZIP
+name: Extract ZIP
 
-on:
-workflow_dispatch:
-push:
-branches: [ main, master ]
+"on":
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
 
 permissions:
-contents: read
+  contents: read
 
 jobs:
-extract:
-runs-on: ubuntu-latest
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-steps:
-  - name: Checkout repository
-    uses: actions/checkout@v4
+      - name: Extract ZIP
+        run: |
+          set -eu
+          ZIP_FILE=$(find . -maxdepth 1 -type f -name '*.zip' | head -n 1)
+          if [ -z "$ZIP_FILE" ]; then
+            echo "ERROR: ZIP tidak ditemukan di folder utama!"
+            exit 1
+          fi
+          mkdir -p extracted
+          unzip -o "$ZIP_FILE" -d extracted
+          echo "ZIP berhasil diekstrak"
+          find extracted -maxdepth 4 -type f | head -100
 
-  - name: Install unzip
-    run: sudo apt-get update && sudo apt-get install -y unzip
-
-  - name: Extract ZIP
-    run: |
-      mkdir -p extracted
-      ZIP_FILE=$(find . -maxdepth 1 -type f -name '*.zip' | head -n 1)
-
-      if [ -z "$ZIP_FILE" ]; then
-        echo "ERROR: File ZIP tidak ditemukan!"
-        exit 1
-      fi
-
-      echo "Mengekstrak: $ZIP_FILE"
-      unzip -o "$ZIP_FILE" -d extracted
-
-      echo "Isi hasil ekstraksi:"
-      find extracted -maxdepth 4 -type f | head -100
-
-  - name: Upload extracted files
-    uses: actions/upload-artifact@v4
-    with:
-      name: RandomReward-Extracted
-      path: extracted/
-      if-no-files-found: error
+      - name: Upload extracted files
+        uses: actions/upload-artifact@v4
+        with:
+          name: Extracted-ZIP
+          path: extracted/
+          if-no-files-found: error
